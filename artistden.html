@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 Artist Den</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0f0d14;
+    --surface:   #1a1726;
+    --surface2:  #221f31;
+    --border:    #2e2a42;
+    --text:      #e8e3f5;
+    --muted:     #7c7499;
+    --accent1:   #ff6b6b;
+    --accent2:   #ffa94d;
+    --accent3:   #cc5de8;
+    --accent4:   #51cf66;
+    --accent5:   #339af0;
+    --open-c:    #51cf66;
+    --closed-c:  #ff6b6b;
+    --wait-c:    #ffa94d;
+    --radius:    14px;
+    --card-w:    275px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 10;
+    padding: 28px 32px 0;
+    display: flex; flex-wrap: wrap; gap: 16px;
+    align-items: flex-end; justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 2.2rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .logo span { font-size: 1.1rem; display: block; font-weight: 400;
+    -webkit-text-fill-color: var(--muted); margin-top: 2px; }
+  .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ── Controls ── */
+  .controls {
+    position: relative; z-index: 10;
+    padding: 20px 32px;
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 180px; max-width: 300px; }
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+  input[type=search] {
+    width: 100%; padding: 10px 14px 10px 38px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; color: var(--text);
+    font-family: inherit; font-size: .92rem; outline: none;
+    transition: border-color .2s;
+  }
+  input[type=search]:focus { border-color: var(--accent3); }
+  input[type=search]::placeholder { color: var(--muted); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab {
+    padding: 7px 16px; border-radius: 999px; font-size: .85rem; font-weight: 500;
+    border: 1.5px solid var(--border); background: transparent; color: var(--muted);
+    cursor: pointer; font-family: inherit; transition: all .18s; white-space: nowrap;
+  }
+  .tab:hover { border-color: var(--accent3); color: var(--text); }
+  .tab.active { color: #fff; border-color: transparent; }
+  .tab[data-cat="all"].active      { background: linear-gradient(135deg,#9b59b6,#6c5ce7); }
+  .tab[data-cat="fursuit"].active  { background: linear-gradient(135deg,var(--accent1),#e84393); }
+  .tab[data-cat="vr"].active       { background: linear-gradient(135deg,var(--accent5),#4bcffa); }
+  .tab[data-cat="sticker"].active  { background: linear-gradient(135deg,var(--accent2),#ffd43b); }
+  .tab[data-cat="makeable"].active { background: linear-gradient(135deg,var(--accent4),#38d9a9); }
+  .tab[data-cat="ref"].active      { background: linear-gradient(135deg,#f06595,#da77f2); }
+  .tab[data-cat="other"].active    { background: linear-gradient(135deg,#868e96,#495057); }
+
+  .count-badge {
+    display: inline-block; margin-left: 6px; padding: 1px 7px;
+    border-radius: 999px; font-size: .75rem; font-weight: 600;
+    background: rgba(255,255,255,.12); color: #fff;
+  }
+
+  select {
+    padding: 8px 12px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: .88rem;
+    outline: none; cursor: pointer;
+  }
+
+  /* ── Grid ── */
+  .grid-wrap { position: relative; z-index: 10; padding: 4px 32px 80px; }
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px; padding: 80px 0; color: var(--muted); text-align: center;
+  }
+  .empty-state .icon { font-size: 3.5rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr));
+    gap: 18px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex; flex-direction: column;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    position: relative; overflow: hidden;
+    animation: fadeUp .35s ease both;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent3);
+    box-shadow: 0 8px 32px rgba(204,93,232,.18);
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 2;
+    background: var(--card-accent, linear-gradient(90deg,var(--accent1),var(--accent3)));
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Art Gallery strip ── */
+  .card-gallery {
+    display: flex; height: 110px; gap: 2px; overflow: hidden;
+    background: var(--surface2); flex-shrink: 0;
+  }
+  .card-gallery.empty { display: none; }
+  .gallery-thumb {
+    flex: 1; overflow: hidden; cursor: zoom-in; position: relative;
+  }
+  .gallery-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform .3s; display: block;
+  }
+  .gallery-thumb:hover img { transform: scale(1.08); }
+  .gallery-thumb::after {
+    content: '↗'; position: absolute; top: 4px; right: 5px;
+    font-size: .65rem; color: rgba(255,255,255,.9);
+    opacity: 0; transition: opacity .2s;
+    background: rgba(0,0,0,.55); border-radius: 4px; padding: 1px 4px;
+  }
+  .gallery-thumb:hover::after { opacity: 1; }
+
+  /* ── Card body ── */
+  .card-body { padding: 16px; display: flex; flex-direction: column; gap: 11px; flex: 1; }
+
+  .card-top { display: flex; gap: 11px; align-items: flex-start; }
+
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface2); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka', sans-serif; font-size: 1.2rem; font-weight: 600;
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .card-info { flex: 1; min-width: 0; }
+  .card-name {
+    font-family: 'Fredoka', sans-serif; font-size: 1.1rem; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text);
+  }
+  .card-handle { font-size: .78rem; color: var(--muted); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── Score badge ── */
+  .card-score {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 4px; font-size: .78rem; font-weight: 700;
+    font-family: 'Fredoka', sans-serif;
+  }
+  .score-num {
+    padding: 1px 7px; border-radius: 6px;
+    background: linear-gradient(135deg, #ffd43b, #ffa94d);
+    color: #1a1200; font-size: .82rem;
+  }
+  .score-label { color: var(--muted); font-size: .72rem; font-weight: 400; }
+
+  /* ── Commission badge & price row ── */
+  .comm-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .comm-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 999px; font-size: .73rem; font-weight: 600;
+    border: 1.5px solid;
+  }
+  .comm-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink:0; }
+  .comm-open     { color: var(--open-c);   border-color: rgba(81,207,102,.45);  background: rgba(81,207,102,.1); }
+  .comm-open::before    { background: var(--open-c); box-shadow: 0 0 5px var(--open-c); }
+  .comm-closed   { color: var(--closed-c); border-color: rgba(255,107,107,.45); background: rgba(255,107,107,.1); }
+  .comm-closed::before  { background: var(--closed-c); }
+  .comm-waitlist { color: var(--wait-c);   border-color: rgba(255,169,77,.45);  background: rgba(255,169,77,.1); }
+  .comm-waitlist::before{ background: var(--wait-c); animation: blink 1.4s infinite; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  .price-tag {
+    font-size: .77rem; color: var(--accent2); font-weight: 600;
+    background: rgba(255,169,77,.1); border: 1px solid rgba(255,169,77,.25);
+    padding: 2px 8px; border-radius: 6px; white-space: nowrap;
+  }
+  .delivery-tag {
+    font-size: .75rem; color: var(--muted);
+  }
+
+  /* ── Category tags ── */
+  .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    padding: 3px 10px; border-radius: 999px; font-size: .73rem; font-weight: 500;
+    border: 1px solid;
+  }
+  .tag-fursuit  { color: var(--accent1); border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.08); }
+  .tag-vr       { color: var(--accent5); border-color: rgba(51,154,240,.35);  background: rgba(51,154,240,.08); }
+  .tag-sticker  { color: var(--accent2); border-color: rgba(255,169,77,.35);  background: rgba(255,169,77,.08); }
+  .tag-makeable { color: var(--accent4); border-color: rgba(81,207,102,.35);  background: rgba(81,207,102,.08); }
+  .tag-ref      { color: #f06595;        border-color: rgba(240,101,149,.35); background: rgba(240,101,149,.08); }
+  .tag-other    { color: var(--muted);   border-color: var(--border);         background: rgba(255,255,255,.04); }
+
+  .card-note { font-size: .81rem; color: var(--muted); line-height: 1.5;
+    border-top: 1px solid var(--border); padding-top: 10px; }
+
+  .card-links {
+    display: flex; gap: 7px; flex-wrap: wrap; margin-top: auto;
+    border-top: 1px solid var(--border); padding-top: 11px;
+  }
+  .link-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px; border-radius: 8px; font-size: .74rem; font-weight: 500;
+    text-decoration: none; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text);
+    transition: all .15s; font-family: inherit;
+  }
+  .link-btn:hover          { border-color: var(--accent3); color: var(--accent3); }
+  .link-btn.twitter:hover  { border-color: #1da1f2; color: #1da1f2; }
+  .link-btn.bluesky:hover  { border-color: #0085ff; color: #0085ff; }
+  .link-btn.instagram:hover{ border-color: #e1306c; color: #e1306c; }
+  .link-btn.website:hover  { border-color: var(--accent4); color: var(--accent4); }
+  .link-btn.fa:hover       { border-color: #2196f3; color: #2196f3; }
+  .link-btn.etsy:hover     { border-color: #f1641e; color: #f1641e; }
+
+  .card-actions {
+    position: absolute; top: 10px; right: 10px; z-index: 5;
+    display: flex; gap: 4px; opacity: 0; transition: opacity .15s;
+  }
+  .card:hover .card-actions { opacity: 1; }
+  .icon-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(10,8,18,.85); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; font-size: .85rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; backdrop-filter: blur(4px);
+  }
+  .icon-btn:hover { border-color: var(--accent1); color: var(--accent1); }
+  .icon-btn.edit:hover { border-color: var(--accent5); color: var(--accent5); }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 9px 18px; border-radius: 10px; font-size: .9rem; font-weight: 500;
+    border: none; cursor: pointer; font-family: inherit; transition: all .18s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn-primary { background: linear-gradient(135deg,var(--accent3),#6c5ce7); color: #fff; box-shadow: 0 4px 16px rgba(204,93,232,.3); }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .btn-danger { background: rgba(255,107,107,.12); border: 1px solid rgba(255,107,107,.4); color: var(--accent1); }
+  .btn-danger:hover { background: rgba(255,107,107,.22); }
+  .btn-sm { padding: 6px 12px; font-size: .82rem; border-radius: 8px; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.78); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 28px; width: 100%; max-width: 540px;
+    max-height: 90vh; overflow-y: auto;
+    transform: translateY(20px); transition: transform .25s;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h2 {
+    font-family: 'Fredoka', sans-serif; font-size: 1.5rem; margin-bottom: 20px;
+    background: linear-gradient(135deg,var(--accent1),var(--accent3));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .section-title {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin: 20px 0 10px;
+    border-top: 1px solid var(--border); padding-top: 16px;
+  }
+  .section-title:first-of-type { margin-top: 8px; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-group label {
+    display: block; font-size: .8rem; font-weight: 500; color: var(--muted);
+    margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .form-group input[type=text],
+  .form-group input[type=url],
+  .form-group textarea {
+    width: 100%; padding: 9px 13px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: inherit; font-size: .88rem;
+    outline: none; transition: border-color .2s; resize: vertical;
+  }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--accent3); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .two-col .form-group { margin: 0; }
+
+  /* Commission status radios */
+  .comm-radios { display: flex; gap: 8px; flex-wrap: wrap; }
+  .comm-radio input { display: none; }
+  .comm-radio label {
+    padding: 7px 16px; border-radius: 999px; font-size: .83rem; cursor: pointer;
+    border: 1.5px solid var(--border); color: var(--muted); transition: all .15s;
+    display: block; user-select: none; font-weight: 500;
+  }
+  .comm-radio[data-v="open"]     input:checked + label { color: var(--open-c);   border-color: var(--open-c);   background: rgba(81,207,102,.12); }
+  .comm-radio[data-v="waitlist"] input:checked + label { color: var(--wait-c);   border-color: var(--wait-c);   background: rgba(255,169,77,.12); }
+  .comm-radio[data-v="closed"]   input:checked + label { color: var(--closed-c); border-color: var(--closed-c); background: rgba(255,107,107,.12); }
+
+  /* Score input */
+  .score-input-wrap {
+    display: flex; align-items: center; gap: 10px; margin-top: 4px;
+  }
+  .score-input-wrap span.edge {
+    font-size: .8rem; color: var(--muted); min-width: 20px; text-align: center;
+  }
+  .score-slider {
+    flex: 1; -webkit-appearance: none; appearance: none;
+    height: 6px; border-radius: 999px; outline: none; cursor: pointer;
+    background: linear-gradient(to right, #ffd43b var(--pct,0%), var(--border) var(--pct,0%));
+  }
+  .score-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd43b, #ffa94d);
+    border: 2px solid var(--bg); cursor: pointer;
+    box-shadow: 0 2px 8px rgba(255,169,77,.5);
+  }
+  .score-slider::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd43b, #ffa94d);
+    border: 2px solid var(--bg); cursor: pointer;
+  }
+  .score-display {
+    font-family: 'Fredoka', sans-serif; font-size: 1.4rem; font-weight: 700;
+    min-width: 52px; text-align: center; color: #ffd43b;
+  }
+  .score-display.zero { color: var(--muted); font-size: 1rem; }
+  .score-clear {
+    font-size: .75rem; color: var(--muted); cursor: pointer;
+    background: none; border: none; font-family: inherit; padding: 4px;
+  }
+  .score-clear:hover { color: var(--accent1); }
+
+  /* Art URL list */
+  .art-url-list { display: flex; flex-direction: column; gap: 8px; }
+  .art-url-row { display: flex; gap: 8px; align-items: center; }
+  .art-url-row input {
+    flex: 1; padding: 8px 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: .85rem;
+    outline: none; transition: border-color .2s;
+  }
+  .art-url-row input:focus { border-color: var(--accent3); }
+  .art-preview-thumb {
+    width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
+    border: 1px solid var(--border); flex-shrink: 0; display: none;
+  }
+  .art-remove { background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 1rem; padding: 4px 6px; border-radius: 6px; transition: color .15s; }
+  .art-remove:hover { color: var(--accent1); }
+
+  /* Category checkboxes */
+  .cat-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cat-check input { display: none; }
+  .cat-check label {
+    padding: 6px 14px; border-radius: 999px; font-size: .82rem; cursor: pointer;
+    border: 1.5px solid var(--border); color: var(--muted); transition: all .15s;
+    display: block; user-select: none;
+  }
+  .cat-check[data-cat="fursuit"]  input:checked + label { background: rgba(255,107,107,.18); border-color: var(--accent1); color: var(--accent1); }
+  .cat-check[data-cat="vr"]       input:checked + label { background: rgba(51,154,240,.18);  border-color: var(--accent5); color: var(--accent5); }
+  .cat-check[data-cat="sticker"]  input:checked + label { background: rgba(255,169,77,.18);  border-color: var(--accent2); color: var(--accent2); }
+  .cat-check[data-cat="makeable"] input:checked + label { background: rgba(81,207,102,.18);  border-color: var(--accent4); color: var(--accent4); }
+  .cat-check[data-cat="ref"]      input:checked + label { background: rgba(240,101,149,.18); border-color: #f06595;        color: #f06595; }
+  .cat-check[data-cat="other"]    input:checked + label { background: rgba(134,142,150,.14); border-color: var(--muted);   color: var(--text); }
+
+  .url-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .url-grid .form-group { margin: 0; }
+
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* ── Lightbox ── */
+  #lightbox {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.92); display: none;
+    align-items: center; justify-content: center; cursor: zoom-out;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img { max-width: 92vw; max-height: 90vh; border-radius: 10px; object-fit: contain; cursor: default; }
+  #lightboxClose {
+    position: absolute; top: 20px; right: 24px; font-size: 1.8rem;
+    color: rgba(255,255,255,.7); cursor: pointer; background: none; border: none;
+    transition: color .15s;
+  }
+  #lightboxClose:hover { color: #fff; }
+
+  /* ── IO Panel ── */
+  .io-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin: 0 32px 20px; position: relative; z-index: 10; display: none;
+  }
+  .io-panel.open { display: block; }
+  .io-panel h3 { font-family: 'Fredoka', sans-serif; font-size: 1.1rem; margin-bottom: 8px; color: var(--accent2); }
+  .io-panel textarea {
+    width: 100%; height: 100px; padding: 10px; resize: vertical;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: monospace; font-size: .78rem; outline: none;
+  }
+  .io-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 18px; font-size: .88rem;
+    transform: translateY(80px); opacity: 0; transition: all .3s;
+    max-width: 280px; box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 600px) {
+    header, .controls, .grid-wrap { padding-left: 16px; padding-right: 16px; }
+    .logo { font-size: 1.7rem; }
+    .url-grid, .two-col { grid-template-columns: 1fr; }
+    .io-panel { margin: 0 16px 20px; }
+    .comm-radios { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🐾 Artist Den<span>Your furry artist collection</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" id="ioToggle">⬆ Import / Export</button>
+    <button class="btn btn-primary" id="addBtn">＋ Add Artist</button>
+  </div>
+</header>
+
+<div class="io-panel" id="ioPanel">
+  <h3>Import / Export</h3>
+  <p style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Paste JSON to import, or export your current list. Commit <code style="color:var(--accent2)">artists.json</code> to your GitHub repo for cross-device sync.</p>
+  <textarea id="ioText" placeholder='[{"name":"..."}]'></textarea>
+  <div class="io-actions">
+    <button class="btn btn-ghost btn-sm" id="exportBtn">📋 Copy JSON</button>
+    <button class="btn btn-primary btn-sm" id="importBtn">📥 Import JSON</button>
+    <button class="btn btn-ghost btn-sm" id="downloadBtn">💾 Download .json</button>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input type="search" id="searchInput" placeholder="Search artists…">
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="all">All <span class="count-badge" id="cnt-all">0</span></button>
+    <button class="tab" data-cat="fursuit">🧵 Fursuit <span class="count-badge" id="cnt-fursuit">0</span></button>
+    <button class="tab" data-cat="vr">🥽 VR Avatar <span class="count-badge" id="cnt-vr">0</span></button>
+    <button class="tab" data-cat="sticker">🎨 Sticker <span class="count-badge" id="cnt-sticker">0</span></button>
+    <button class="tab" data-cat="makeable">✂️ Makeable <span class="count-badge" id="cnt-makeable">0</span></button>
+    <button class="tab" data-cat="ref">📄 Ref Sheet <span class="count-badge" id="cnt-ref">0</span></button>
+    <button class="tab" data-cat="other">⭐ Other <span class="count-badge" id="cnt-other">0</span></button>
+  </div>
+
+  <select id="sortSelect">
+    <option value="rating-desc">⭐ Top Rated</option>
+    <option value="rating-asc">⭐ Lowest Rated</option>
+    <option value="name">A–Z</option>
+    <option value="name-desc">Z–A</option>
+    <option value="newest">Newest Added</option>
+    <option value="oldest">Oldest Added</option>
+  </select>
+</div>
+
+<div class="grid-wrap">
+  <div class="grid" id="grid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="icon">🦊</div>
+    <p id="emptyMsg">No artists yet. Add your first one!</p>
+    <button class="btn btn-primary" style="margin-top:8px" id="emptyAddBtn">＋ Add Artist</button>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add Artist</h2>
+    <input type="hidden" id="editId">
+
+    <div class="form-group">
+      <label>Artist Name *</label>
+      <input type="text" id="fName" placeholder="e.g. Fluffy Paws Studio">
+    </div>
+    <div class="two-col">
+      <div class="form-group" style="margin:0">
+        <label>Handle / Username</label>
+        <input type="text" id="fHandle" placeholder="@handle">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Avatar URL <span style="font-weight:400;text-transform:none;font-size:.9em">(optional)</span></label>
+        <input type="url" id="fAvatar" placeholder="https://…">
+      </div>
+    </div>
+
+    <p class="section-title">Commission Status</p>
+    <div class="comm-radios">
+      <div class="comm-radio" data-v="open">
+        <input type="radio" name="commStatus" id="cs-open" value="open">
+        <label for="cs-open">✅ Open</label>
+      </div>
+      <div class="comm-radio" data-v="waitlist">
+        <input type="radio" name="commStatus" id="cs-wait" value="waitlist">
+        <label for="cs-wait">⏳ Waitlist</label>
+      </div>
+      <div class="comm-radio" data-v="closed">
+        <input type="radio" name="commStatus" id="cs-closed" value="closed">
+        <label for="cs-closed">🔒 Closed</label>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:12px">
+      <div class="form-group" style="margin:0">
+        <label>Starting Price</label>
+        <input type="text" id="fPrice" placeholder="e.g. $800+  or  $50–$120">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Delivery Time</label>
+        <input type="text" id="fDelivery" placeholder="e.g. 3–6 months">
+      </div>
+    </div>
+
+    <p class="section-title">Your Score <span id="scoreDisplay" class="score-display zero" style="display:inline-block;vertical-align:middle;margin-left:8px">—</span></p>
+    <div class="score-input-wrap">
+      <span class="edge">0</span>
+      <input type="range" class="score-slider" id="fRatingSlider" min="0" max="100" value="0" step="1">
+      <span class="edge">100</span>
+      <button type="button" class="score-clear" id="scoreClear">clear</button>
+    </div>
+    <input type="hidden" id="fRating" value="0">
+
+    <p class="section-title">Categories</p>
+    <div class="cat-checkboxes">
+      <div class="cat-check" data-cat="fursuit"><input type="checkbox" id="cat-fursuit" value="fursuit"><label for="cat-fursuit">🧵 Fursuit</label></div>
+      <div class="cat-check" data-cat="vr"><input type="checkbox" id="cat-vr" value="vr"><label for="cat-vr">🥽 VR Avatar</label></div>
+      <div class="cat-check" data-cat="sticker"><input type="checkbox" id="cat-sticker" value="sticker"><label for="cat-sticker">🎨 Sticker</label></div>
+      <div class="cat-check" data-cat="makeable"><input type="checkbox" id="cat-makeable" value="makeable"><label for="cat-makeable">✂️ Makeable</label></div>
+      <div class="cat-check" data-cat="ref"><input type="checkbox" id="cat-ref" value="ref"><label for="cat-ref">📄 Ref Sheet</label></div>
+      <div class="cat-check" data-cat="other"><input type="checkbox" id="cat-other" value="other"><label for="cat-other">⭐ Other</label></div>
+    </div>
+
+    <p class="section-title">Sample Art <span style="font-weight:400;text-transform:none;font-size:.9em;color:var(--muted)">(up to 5 image URLs)</span></p>
+    <div class="art-url-list" id="artUrlList"></div>
+    <button type="button" class="btn btn-ghost btn-sm" id="addArtBtn" style="margin-top:8px">＋ Add Image</button>
+
+    <p class="section-title">Notes</p>
+    <div class="form-group" style="margin:0">
+      <textarea id="fNote" rows="2" placeholder="Commission notes, species restrictions, queue info…"></textarea>
+    </div>
+
+    <p class="section-title">Links</p>
+    <div class="url-grid">
+      <div class="form-group"><label>Twitter / X</label><input type="url" id="fTwitter" placeholder="https://twitter.com/…"></div>
+      <div class="form-group"><label>Bluesky</label><input type="url" id="fBluesky" placeholder="https://bsky.app/…"></div>
+      <div class="form-group"><label>Instagram</label><input type="url" id="fInstagram" placeholder="https://instagram.com/…"></div>
+      <div class="form-group"><label>FurAffinity</label><input type="url" id="fFA" placeholder="https://furaffinity.net/…"></div>
+      <div class="form-group"><label>Website / Portfolio</label><input type="url" id="fWebsite" placeholder="https://…"></div>
+      <div class="form-group"><label>Etsy / Shop</label><input type="url" id="fEtsy" placeholder="https://etsy.com/…"></div>
+      <div class="form-group"><label>Trello / Queue</label><input type="url" id="fTrello" placeholder="https://trello.com/…"></div>
+      <div class="form-group"><label>Other Link</label><input type="url" id="fOther" placeholder="https://…"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="deleteBtn" style="display:none;margin-right:auto">🗑 Delete</button>
+      <button class="btn btn-ghost" id="cancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn">Save Artist</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button id="lightboxClose">✕</button>
+  <img id="lightboxImg" src="" alt="Sample art">
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const CAT_ACCENTS = {
+  fursuit:  'linear-gradient(90deg,#ff6b6b,#e84393)',
+  vr:       'linear-gradient(90deg,#339af0,#4bcffa)',
+  sticker:  'linear-gradient(90deg,#ffa94d,#ffd43b)',
+  makeable: 'linear-gradient(90deg,#51cf66,#38d9a9)',
+  ref:      'linear-gradient(90deg,#f06595,#da77f2)',
+  other:    'linear-gradient(90deg,#868e96,#adb5bd)',
+};
+const AVATAR_COLORS = ['#ff6b6b','#ffa94d','#cc5de8','#51cf66','#339af0','#f06595','#38d9a9'];
+const CAT_LABELS = { fursuit:'Fursuit', vr:'VR Avatar', sticker:'Sticker', makeable:'Makeable', ref:'Ref Sheet', other:'Other' };
+
+// ─── Sample data ──────────────────────────────────────────────────────────────
+const SAMPLE = [
+  { id:'s1', name:'Example Fursuit Co.', handle:'@examplefursuit', categories:['fursuit'],
+    commStatus:'open', price:'$1,200+', delivery:'4–6 months', rating:88, avatar:'',
+    note:'Hand-paw queue now open for fall slots!', art:[],
+    links:{ twitter:'https://twitter.com', website:'https://example.com' }, added: Date.now()-86400000*5 },
+  { id:'s2', name:'Neon Paws VR', handle:'@neonpawsvr', categories:['vr','ref'],
+    commStatus:'waitlist', price:'$80–$350', delivery:'6–8 weeks', rating:74, avatar:'',
+    note:'VR avatars for VRChat & ChilloutVR. Refs available!', art:[],
+    links:{ twitter:'https://twitter.com', instagram:'https://instagram.com' }, added: Date.now()-86400000*2 },
+  { id:'s3', name:'Stickersmith', handle:'@stickersmith', categories:['sticker'],
+    commStatus:'open', price:'$15–$40', delivery:'2–3 weeks', rating:61, avatar:'',
+    note:'Holographic stickers & art prints. Ships worldwide.', art:[],
+    links:{ instagram:'https://instagram.com', etsy:'https://etsy.com' }, added: Date.now()-86400000*10 },
+  { id:'s4', name:'Makeable Designs', handle:'@makeabledesigns', categories:['makeable','fursuit'],
+    commStatus:'closed', price:'$200 (pattern)', delivery:'1–2 weeks (digital)', rating:50, avatar:'',
+    note:'DIY fursuit patterns and tutorials.', art:[],
+    links:{ website:'https://example.com', fa:'https://furaffinity.net' }, added: Date.now() },
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+function loadArtists() {
+  try { const r=localStorage.getItem('artistDen_v3'); if(r) return JSON.parse(r); } catch{}
+  return SAMPLE;
+}
+function saveArtists(arr) { localStorage.setItem('artistDen_v3', JSON.stringify(arr)); }
+
+let artists = loadArtists();
+let activeTab = 'all';
+let searchQ = '';
+let sortBy = 'rating-desc';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function initials(n) { return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function avatarColor(n) {
+  let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))&0xfffff;
+  return AVATAR_COLORS[h%AVATAR_COLORS.length];
+}
+function scoreHtml(r) {
+  if (!r) return '';
+  return `<div class="card-score"><span class="score-num">${r}</span><span class="score-label">/ 100</span></div>`;
+}
+function commBadgeHtml(s) {
+  const map={open:['comm-open','Open'],waitlist:['comm-waitlist','Waitlist'],closed:['comm-closed','Closed']};
+  if (!s || !map[s]) return '';
+  const [cls,label]=map[s];
+  return `<span class="comm-badge ${cls}">${label}</span>`;
+}
+function linkIcon(t) { return {twitter:'𝕏',bluesky:'🦋',instagram:'📷',fa:'🐾',website:'🌐',etsy:'🛒',trello:'📋',other:'🔗'}[t]||'🔗'; }
+function linkLabel(t){ return {twitter:'Twitter',bluesky:'Bluesky',instagram:'Instagram',fa:'FurAffinity',website:'Website',etsy:'Etsy',trello:'Queue',other:'Link'}[t]||t; }
+
+// ─── Build Card ───────────────────────────────────────────────────────────────
+function buildCard(a) {
+  const primaryCat = a.categories?.[0]||'other';
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.dataset.id = a.id;
+  div.style.setProperty('--card-accent', CAT_ACCENTS[primaryCat]||CAT_ACCENTS.other);
+
+  const artUrls = (a.art||[]).filter(Boolean);
+  const galleryHtml = artUrls.length
+    ? `<div class="card-gallery">${artUrls.slice(0,5).map(u=>
+        `<div class="gallery-thumb" data-lightbox="${u}">
+          <img src="${u}" alt="art" loading="lazy" onerror="this.closest('.gallery-thumb').style.display='none'">
+        </div>`).join('')}</div>`
+    : '<div class="card-gallery empty"></div>';
+
+  const tagsHtml = (a.categories||[]).map(c=>
+    `<span class="tag tag-${c}">${CAT_LABELS[c]||c}</span>`).join('');
+
+  const linksHtml = Object.entries(a.links||{}).filter(([,v])=>v).map(([k,v])=>
+    `<a href="${v}" target="_blank" rel="noopener" class="link-btn ${k}">${linkIcon(k)} ${linkLabel(k)}</a>`).join('');
+
+  const avatarHtml = a.avatar
+    ? `<img src="${a.avatar}" alt="${a.name}" onerror="this.parentElement.innerHTML='${initials(a.name)}'">`
+    : initials(a.name);
+
+  div.innerHTML = `
+    <div class="card-actions">
+      <button class="icon-btn edit" data-edit="${a.id}" title="Edit">✏️</button>
+      <button class="icon-btn" data-del="${a.id}" title="Delete">🗑</button>
+    </div>
+    ${galleryHtml}
+    <div class="card-body">
+      <div class="card-top">
+        <div class="avatar" style="${!a.avatar?`background:${avatarColor(a.name)};color:#fff`:''}">${avatarHtml}</div>
+        <div class="card-info">
+          <div class="card-name" title="${a.name}">${a.name}</div>
+          ${a.handle?`<div class="card-handle">${a.handle}</div>`:''}
+          ${a.rating?`<div>${scoreHtml(a.rating)}</div>`:''}
+        </div>
+      </div>
+      <div class="comm-row">
+        ${commBadgeHtml(a.commStatus)}
+        ${a.price?`<span class="price-tag">💰 ${a.price}</span>`:''}
+      </div>
+      ${a.delivery?`<div class="delivery-tag">⏱ ${a.delivery}</div>`:''}
+      ${tagsHtml?`<div class="card-tags">${tagsHtml}</div>`:''}
+      ${a.note?`<div class="card-note">${a.note}</div>`:''}
+      ${linksHtml?`<div class="card-links">${linksHtml}</div>`:''}
+    </div>`;
+  return div;
+}
+
+// ─── Filter & Sort ────────────────────────────────────────────────────────────
+function getFiltered() {
+  let list = [...artists];
+  if (activeTab !== 'all') list = list.filter(a=>a.categories?.includes(activeTab));
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    list = list.filter(a=>
+      a.name.toLowerCase().includes(q)||
+      (a.handle||'').toLowerCase().includes(q)||
+      (a.note||'').toLowerCase().includes(q)
+    );
+  }
+  list.sort((a,b)=>{
+    const ra=a.rating||0, rb=b.rating||0;
+    if(sortBy==='rating-desc') return rb!==ra?rb-ra:a.name.localeCompare(b.name);
+    if(sortBy==='rating-asc')  return ra!==rb?ra-rb:a.name.localeCompare(b.name);
+    if(sortBy==='name')        return a.name.localeCompare(b.name);
+    if(sortBy==='name-desc')   return b.name.localeCompare(a.name);
+    if(sortBy==='newest')      return (b.added||0)-(a.added||0);
+    if(sortBy==='oldest')      return (a.added||0)-(b.added||0);
+    return 0;
+  });
+  return list;
+}
+
+function updateCounts() {
+  document.getElementById('cnt-all').textContent = artists.length;
+  ['fursuit','vr','sticker','makeable','ref','other'].forEach(c=>{
+    const el=document.getElementById(`cnt-${c}`);
+    if(el) el.textContent=artists.filter(a=>a.categories?.includes(c)).length;
+  });
+}
+
+function render() {
+  const grid=document.getElementById('grid');
+  const empty=document.getElementById('emptyState');
+  const filtered=getFiltered();
+  grid.innerHTML='';
+  if (!filtered.length) {
+    grid.style.display='none'; empty.style.display='flex';
+    document.getElementById('emptyMsg').textContent=
+      artists.length===0?'No artists yet. Add your first one!'
+      :`No artists match "${searchQ||activeTab}".`;
+  } else {
+    grid.style.display='grid'; empty.style.display='none';
+    filtered.forEach((a,i)=>{ const c=buildCard(a); c.style.animationDelay=`${i*28}ms`; grid.appendChild(c); });
+  }
+  updateCounts();
+}
+
+// ─── Card click delegation ────────────────────────────────────────────────────
+document.getElementById('grid').addEventListener('click', e=>{
+  const edit=e.target.closest('[data-edit]');
+  const del =e.target.closest('[data-del]');
+  const lb  =e.target.closest('[data-lightbox]');
+  if (edit) { openModal(edit.dataset.edit); return; }
+  if (del)  {
+    if(confirm('Remove this artist?')) {
+      artists=artists.filter(a=>a.id!==del.dataset.del);
+      saveArtists(artists); render(); toast('Artist removed 🗑');
+    }
+    return;
+  }
+  if (lb) openLightbox(lb.dataset.lightbox);
+});
+
+// ─── Tabs / Search / Sort ─────────────────────────────────────────────────────
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn=e.target.closest('.tab'); if(!btn) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active'); activeTab=btn.dataset.cat; render();
+});
+document.getElementById('searchInput').addEventListener('input', e=>{ searchQ=e.target.value.trim(); render(); });
+document.getElementById('sortSelect').addEventListener('change', e=>{ sortBy=e.target.value; render(); });
+
+// ─── Score slider ─────────────────────────────────────────────────────────────
+function setScoreUI(val) {
+  val = Math.max(0, Math.min(100, parseInt(val)||0));
+  document.getElementById('fRating').value = val;
+  document.getElementById('fRatingSlider').value = val;
+  const disp = document.getElementById('scoreDisplay');
+  if (val === 0) {
+    disp.textContent = '—'; disp.className = 'score-display zero';
+  } else {
+    disp.textContent = val; disp.className = 'score-display';
+  }
+  // update slider fill
+  document.getElementById('fRatingSlider').style.setProperty('--pct', val + '%');
+}
+document.getElementById('fRatingSlider').addEventListener('input', e => setScoreUI(e.target.value));
+document.getElementById('scoreClear').addEventListener('click', () => setScoreUI(0));
+
+// ─── Art URL rows ─────────────────────────────────────────────────────────────
+function addArtRow(url='') {
+  const list=document.getElementById('artUrlList');
+  if(list.children.length>=5) { toast('Max 5 images per artist'); return; }
+  const row=document.createElement('div');
+  row.className='art-url-row';
+  row.innerHTML=`
+    <img class="art-preview-thumb" src="" alt="">
+    <input type="url" placeholder="https://… (direct image link)" value="${url}">
+    <button type="button" class="art-remove" title="Remove">✕</button>`;
+  const img=row.querySelector('img');
+  const inp=row.querySelector('input');
+  function preview() {
+    const v=inp.value.trim();
+    if(v){ img.src=v; img.style.display='block'; } else { img.style.display='none'; }
+  }
+  if(url) preview();
+  inp.addEventListener('blur', preview);
+  row.querySelector('.art-remove').addEventListener('click', ()=>row.remove());
+  list.appendChild(row);
+  inp.focus();
+}
+document.getElementById('addArtBtn').addEventListener('click', ()=>addArtRow());
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+const FIELDS = ['editId','fName','fHandle','fAvatar','fNote','fPrice','fDelivery',
+                'fTwitter','fBluesky','fInstagram','fFA','fWebsite','fEtsy','fTrello','fOther'];
+const CATS = ['fursuit','vr','sticker','makeable','ref','other'];
+
+function openModal(id=null) {
+  FIELDS.forEach(f=>{ const el=document.getElementById(f); if(el) el.value=''; });
+  CATS.forEach(c=>{ const el=document.getElementById(`cat-${c}`); if(el) el.checked=false; });
+  document.querySelectorAll('input[name=commStatus]').forEach(r=>r.checked=false);
+  document.getElementById('artUrlList').innerHTML='';
+  setScoreUI(0);
+  document.getElementById('deleteBtn').style.display='none';
+  document.getElementById('modalTitle').textContent='Add Artist';
+
+  if (id) {
+    const a=artists.find(x=>x.id===id); if(!a) return;
+    document.getElementById('modalTitle').textContent='Edit Artist';
+    document.getElementById('deleteBtn').style.display='block';
+    document.getElementById('editId').value     = id;
+    document.getElementById('fName').value      = a.name;
+    document.getElementById('fHandle').value    = a.handle||'';
+    document.getElementById('fAvatar').value    = a.avatar||'';
+    document.getElementById('fNote').value      = a.note||'';
+    document.getElementById('fPrice').value     = a.price||'';
+    document.getElementById('fDelivery').value  = a.delivery||'';
+    document.getElementById('fTwitter').value   = a.links?.twitter||'';
+    document.getElementById('fBluesky').value   = a.links?.bluesky||'';
+    document.getElementById('fInstagram').value = a.links?.instagram||'';
+    document.getElementById('fFA').value        = a.links?.fa||'';
+    document.getElementById('fWebsite').value   = a.links?.website||'';
+    document.getElementById('fEtsy').value      = a.links?.etsy||'';
+    document.getElementById('fTrello').value    = a.links?.trello||'';
+    document.getElementById('fOther').value     = a.links?.other||'';
+    (a.categories||[]).forEach(c=>{ const el=document.getElementById(`cat-${c}`); if(el) el.checked=true; });
+    const statusMap={open:'cs-open',waitlist:'cs-wait',closed:'cs-closed'};
+    const radioId=statusMap[a.commStatus]; if(radioId){ const r=document.getElementById(radioId); if(r) r.checked=true; }
+    setScoreUI(a.rating||0);
+    (a.art||[]).filter(Boolean).forEach(u=>addArtRow(u));
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(),60);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('addBtn').addEventListener('click', ()=>openModal());
+document.getElementById('emptyAddBtn').addEventListener('click', ()=>openModal());
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e=>{
+  if(e.target===document.getElementById('modalOverlay')) closeModal();
+});
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  const name=document.getElementById('fName').value.trim();
+  if(!name){ alert('Artist name is required!'); return; }
+  const cats=CATS.filter(c=>document.getElementById(`cat-${c}`).checked);
+  const commEl=document.querySelector('input[name=commStatus]:checked');
+  const artUrls=[...document.querySelectorAll('#artUrlList input')].map(i=>i.value.trim()).filter(Boolean);
+  const entry={
+    id:         document.getElementById('editId').value||crypto.randomUUID(),
+    name,
+    handle:     document.getElementById('fHandle').value.trim(),
+    avatar:     document.getElementById('fAvatar').value.trim(),
+    note:       document.getElementById('fNote').value.trim(),
+    price:      document.getElementById('fPrice').value.trim(),
+    delivery:   document.getElementById('fDelivery').value.trim(),
+    commStatus: commEl?commEl.value:'',
+    rating:     parseInt(document.getElementById('fRating').value)||0,
+    categories: cats.length?cats:['other'],
+    art:        artUrls,
+    links:{
+      twitter:   document.getElementById('fTwitter').value.trim(),
+      bluesky:   document.getElementById('fBluesky').value.trim(),
+      instagram: document.getElementById('fInstagram').value.trim(),
+      fa:        document.getElementById('fFA').value.trim(),
+      website:   document.getElementById('fWebsite').value.trim(),
+      etsy:      document.getElementById('fEtsy').value.trim(),
+      trello:    document.getElementById('fTrello').value.trim(),
+      other:     document.getElementById('fOther').value.trim(),
+    },
+    added: Date.now()
+  };
+  const idx=artists.findIndex(a=>a.id===entry.id);
+  if(idx>=0){ entry.added=artists[idx].added; artists[idx]=entry; }
+  else artists.push(entry);
+  saveArtists(artists); render(); closeModal();
+  toast(idx>=0?'Artist updated ✨':'Artist added 🐾');
+});
+
+document.getElementById('deleteBtn').addEventListener('click', ()=>{
+  const id=document.getElementById('editId').value; if(!id) return;
+  if(confirm('Delete this artist?')) {
+    artists=artists.filter(a=>a.id!==id);
+    saveArtists(artists); render(); closeModal(); toast('Artist deleted 🗑');
+  }
+});
+
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src=url;
+  document.getElementById('lightbox').classList.add('open');
+}
+document.getElementById('lightbox').addEventListener('click', e=>{
+  if(!e.target.closest('img')) document.getElementById('lightbox').classList.remove('open');
+});
+document.getElementById('lightboxClose').addEventListener('click', ()=>
+  document.getElementById('lightbox').classList.remove('open'));
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') document.getElementById('lightbox').classList.remove('open');
+});
+
+// ─── Import / Export ──────────────────────────────────────────────────────────
+document.getElementById('ioToggle').addEventListener('click', ()=>{
+  const p=document.getElementById('ioPanel'); p.classList.toggle('open');
+  if(p.classList.contains('open')) document.getElementById('ioText').value=JSON.stringify(artists,null,2);
+});
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const t=JSON.stringify(artists,null,2);
+  navigator.clipboard.writeText(t).then(()=>toast('Copied to clipboard 📋'));
+  document.getElementById('ioText').value=t;
+});
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const b=new Blob([JSON.stringify(artists,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='artists.json'; a.click();
+  toast('Downloaded artists.json 💾');
+});
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  try {
+    const p=JSON.parse(document.getElementById('ioText').value);
+    if(!Array.isArray(p)) throw new Error('Expected a JSON array');
+    artists=p; saveArtists(artists); render();
+    document.getElementById('ioPanel').classList.remove('open');
+    toast(`Imported ${artists.length} artists ✨`);
+  } catch(err){ alert('Invalid JSON: '+err.message); }
+});
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el=document.getElementById('toast'); el.textContent=msg;
+  el.classList.add('show'); clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+render();
+</script>
+</body>
+</html>
